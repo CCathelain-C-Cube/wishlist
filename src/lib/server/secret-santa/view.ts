@@ -38,7 +38,9 @@ export function toSecretSantaView(
         handled.add(key);
         handled.add(reverse);
         exclusions.push({
+            giverId: e.giverId,
             giverName: names.get(e.giverId) ?? "",
+            receiverId: e.receiverId,
             receiverName: names.get(e.receiverId) ?? "",
             twoWay
         });

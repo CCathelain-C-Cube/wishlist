@@ -39,14 +39,16 @@ describe("toSecretSantaView", () => {
 
     it("collapses symmetric exclusions", () => {
         const view = toSecretSantaView(record(), "u1", false);
-        assert.deepEqual(view.exclusions, [{ giverName: "Name u1", receiverName: "Name u2", twoWay: true }]);
+        assert.deepEqual(view.exclusions, [
+            { giverId: "u1", giverName: "Name u1", receiverId: "u2", receiverName: "Name u2", twoWay: true }
+        ]);
     });
 
     it("keeps one-way exclusions one-way", () => {
         const r = record();
         r.exclusions = [{ giverId: "u1", receiverId: "u3" }];
         assert.deepEqual(toSecretSantaView(r, "u1", false).exclusions, [
-            { giverName: "Name u1", receiverName: "Name u3", twoWay: false }
+            { giverId: "u1", giverName: "Name u1", receiverId: "u3", receiverName: "Name u3", twoWay: false }
         ]);
     });
 
@@ -69,5 +71,16 @@ describe("toSecretSantaView", () => {
         const view = toSecretSantaView(r, "u1", false);
         assert.equal(view.recipientRemoved, true);
         assert.equal(view.recipient, null);
+    });
+
+    it("keys exclusions by id so duplicate display names stay distinct", () => {
+        const r = record();
+        r.participants = r.participants.map((p) => ({ ...p, user: { ...p.user, name: "Same" } }));
+        r.exclusions = [
+            { giverId: "u1", receiverId: "u2" },
+            { giverId: "u3", receiverId: "u2" }
+        ];
+        const keys = toSecretSantaView(r, "u1", false).exclusions.map((e) => `${e.giverId}>${e.receiverId}`);
+        assert.deepEqual(keys, ["u1>u2", "u3>u2"]);
     });
 });

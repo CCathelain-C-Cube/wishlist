@@ -8,6 +8,6 @@ export type SecretSantaView = {
     recipient: { id: string; name: string; username: string } | null;
     recipientRemoved: boolean;
     participants: { id: string; name: string }[];
-    exclusions: { giverName: string; receiverName: string; twoWay: boolean }[];
+    exclusions: { giverId: string; giverName: string; receiverId: string; receiverName: string; twoWay: boolean }[];
     canDelete: boolean;
 };

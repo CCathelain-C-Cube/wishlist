@@ -57,7 +57,7 @@
             <div>
                 <span class="font-semibold">{$t("secret-santa.exclusions")}:</span>
                 <ul class="list-inside list-disc">
-                    {#each secretSanta.exclusions as e (e.giverName + "\u0000" + e.receiverName)}
+                    {#each secretSanta.exclusions as e (e.giverId + "\u0000" + e.receiverId)}
                         <li>{e.giverName} {e.twoWay ? "↔" : "→"} {e.receiverName}</li>
                     {/each}
                 </ul>
