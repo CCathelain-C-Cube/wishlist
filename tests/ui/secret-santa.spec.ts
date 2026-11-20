@@ -285,3 +285,37 @@ test.describe("overview", () => {
         expect(found).toBe(true);
     });
 });
+
+test.describe("navigation entry", () => {
+    test("nav entry hidden when disabled", async ({ page }) => {
+        await page.goto("/lists");
+        await expect(page.getByRole("link", { name: "My Secret Santa" })).toHaveCount(0);
+    });
+
+    test("nav entry visible when enabled and navigates to the overview", async ({ page }) => {
+        await enableSecretSanta(page);
+        await page.goto("/lists");
+        await page.getByRole("link", { name: "My Secret Santa" }).click();
+        await expect(page).toHaveURL(/\/secret-santa$/);
+    });
+
+    test("nav entry follows the active group", async ({ page, userData, userFactory }) => {
+        await enableSecretSanta(page);
+        const adminPage = await userFactory.getAdminPage();
+        const groupB: GroupData = await adminPage.request
+            .put("/api/groups", { data: { name: randomString(), createOnly: true } })
+            .then((r) => r.json())
+            .then(({ group }) => group);
+        await adminPage.request.put(`/api/groups/${groupB.id}/users/${userData.id}`, { data: { manager: true } });
+
+        await page.request.patch(`/api/users/${userData.id}/groups/${groupB.id}`, { data: { active: true } });
+        await page.goto("/lists");
+        await expect(page.getByRole("link", { name: "My Secret Santa" })).toHaveCount(0);
+
+        await page.request.patch(`/api/users/${userData.id}/groups/${userData.groups[0].id}`, {
+            data: { active: true }
+        });
+        await page.goto("/lists");
+        await expect(page.getByRole("link", { name: "My Secret Santa" })).toBeVisible();
+    });
+});

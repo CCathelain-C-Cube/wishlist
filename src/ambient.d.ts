@@ -14,6 +14,7 @@ type NavItem = {
     labelKey: string;
     href: (user?: LocalUser | null) => string;
     icon: string;
+    feature?: "secretSanta";
 };
 
 type ProductData = {
