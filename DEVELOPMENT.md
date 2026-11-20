@@ -58,6 +58,7 @@ These checks are run in the CI pipeline.
 ```sh
 pnpm check
 pnpm lint
+pnpm test:unit
 pnpm format --write
 ```
 
