@@ -15,6 +15,7 @@ Wishlist is a self-hosted wishlist application that you can share with your frie
 - [x] Automatically fetch product data from URL
 - [x] Invite users via email (SMTP configuration required)
 - [x] Options for [suggestions](#suggestions)
+- [x] [Secret Santa](#secret-santa) gift exchanges
 - [x] PWA Support
 - [x] Multiple groups
 - [x] Registry Mode (single list)
@@ -129,6 +130,14 @@ In this mode, the suggested item will be automatically approved and added to the
 #### ▶ Suprise Me
 
 In this mode, the suggested item is automatically approved and added to the wishlist. **However**, the item only shows for everyone except for the suggestee. The suggestee cannot see and therefore cannot edit or delete the item once it has been added.
+
+### Secret Santa
+
+Secret Santa is off by default. A group manager can enable it per group in the group settings, after which group members can run Secret Santa gift exchanges from "My Secret Santa" in the menu. It is not available in registry mode.
+
+When creating a Secret Santa, pick the participants and optionally add exclusions, for example so partners don't draw each other. An exclusion can apply one way or both ways. The draw happens once, when the Secret Santa is created, and is then locked. To change anything, delete it and create it again.
+
+Each participant only sees who they drew. Nobody else can see who gives to whom in the app, not even the creator, group managers or admins.
 
 ### SMTP
 
