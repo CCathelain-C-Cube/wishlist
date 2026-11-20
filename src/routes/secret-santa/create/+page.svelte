@@ -13,13 +13,25 @@
     let selected: string[] = $state([]);
     let exclusions: ExclusionInput[] = $state([]);
     const participants = $derived(data.members.filter((m) => selected.includes(m.id)));
+    let submitting = $state(false);
 </script>
 
 <svelte:head>
     <title>{$t("secret-santa.create")}</title>
 </svelte:head>
 
-<form class="flex flex-col gap-4" action="?/persist" method="POST" use:enhance>
+<form
+    class="flex flex-col gap-4"
+    action="?/persist"
+    method="POST"
+    use:enhance={() => {
+        submitting = true;
+        return async ({ update }) => {
+            await update();
+            submitting = false;
+        };
+    }}
+>
     <label class="label" for="name">
         <span>{$t("secret-santa.name")}</span>
         <input id="name" name="name" class="input" autocomplete="off" type="text" />
@@ -57,6 +69,8 @@
         >
             {$t("general.cancel")}
         </button>
-        <button class="preset-filled-primary-500 btn w-min" type="submit">{$t("general.create")}</button>
+        <button class="preset-filled-primary-500 btn w-min" disabled={submitting} type="submit">
+            {$t("general.create")}
+        </button>
     </div>
 </form>
