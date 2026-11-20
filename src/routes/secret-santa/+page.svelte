@@ -2,6 +2,7 @@
     import type { PageProps } from "./$types";
     import { getFormatter } from "$lib/i18n";
     import { resolve } from "$app/paths";
+    import SecretSantaCard from "$lib/components/secret-santa/SecretSantaCard.svelte";
 
     const { data }: PageProps = $props();
     const t = getFormatter();
@@ -17,7 +18,11 @@
             {$t("secret-santa.create")}
         </a>
     </div>
-    {#if data.count === 0}
+    {#if data.secretSantas.length === 0}
         <p class="subtext">{$t("secret-santa.empty")}</p>
+    {:else}
+        {#each data.secretSantas as secretSanta (secretSanta.id)}
+            <SecretSantaCard {secretSanta} />
+        {/each}
     {/if}
 </div>

@@ -1,7 +1,8 @@
 import z from "zod";
 import type { Pair } from "./draw";
+import type { ExclusionInput } from "../../secret-santa-types";
 
-export type ExclusionInput = { giverId: string; receiverId: string; twoWay: boolean };
+export type { ExclusionInput };
 export type CreateInput = {
     name: string;
     description: string | null;

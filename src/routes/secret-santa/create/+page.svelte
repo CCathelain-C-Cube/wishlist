@@ -5,7 +5,7 @@
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
     import ParticipantPicker from "$lib/components/secret-santa/ParticipantPicker.svelte";
     import ExclusionEditor from "$lib/components/secret-santa/ExclusionEditor.svelte";
-    import type { ExclusionInput } from "$lib/server/secret-santa/input";
+    import type { ExclusionInput } from "$lib/secret-santa-types";
 
     const { data, form }: PageProps = $props();
     const t = getFormatter();

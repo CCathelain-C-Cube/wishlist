@@ -21,4 +21,26 @@ export class SecretSantaPage extends BasePage {
     async clickCreate() {
         await this.page.getByRole("link", { name: "Create Secret Santa" }).click();
     }
+
+    card(name: string) {
+        return this.page
+            .getByRole("heading", { name, level: 2 })
+            .locator("xpath=ancestor::div[contains(@class,'card')][1]");
+    }
+
+    async expectCard(name: string) {
+        await expect(this.page.getByRole("heading", { name, level: 2 })).toBeVisible();
+    }
+
+    async reveal(name: string) {
+        await this.card(name).getByRole("button", { name: "Reveal" }).click();
+        const recipient = this.card(name).getByTestId("recipient-name");
+        await expect(recipient).toBeVisible();
+        return (await recipient.textContent())!.trim();
+    }
+
+    async deleteSecretSanta(name: string) {
+        await this.card(name).getByRole("button", { name: "Delete Secret Santa" }).click();
+        await this.page.getByRole("dialog").getByRole("button", { name: "Confirm" }).click();
+    }
 }

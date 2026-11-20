@@ -1,7 +1,9 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
+import type { GroupData, UserData } from "../types";
 import { UserMenu } from "../modules/user-menu";
 import { enableSecretSanta } from "../helpers/secret-santa";
-import { createUser } from "../util";
+import { createUser, randomString } from "../util";
 import { CreateSecretSantaPage } from "../pageObjects/create-secret-santa.page";
 import { SecretSantaPage } from "../pageObjects/secret-santa.page";
 
@@ -56,6 +58,7 @@ test.describe("create", () => {
         await create.submit();
 
         await expect(page).toHaveURL(/\/secret-santa$/);
+        await new SecretSantaPage(page).expectCard("Office Santa");
     });
 
     test("shows an error and creates nothing when no draw is possible", async ({ page, userData, userFactory }) => {
@@ -123,5 +126,162 @@ test.describe("create", () => {
         await create.submit();
 
         await expect(page).toHaveURL(/\/secret-santa$/);
+        await new SecretSantaPage(page).expectCard("Overlap");
+    });
+});
+
+async function setup(
+    page: Page,
+    userData: UserData,
+    userFactory: {
+        createUserPage: (o: { group: GroupData; manager?: boolean }) => Promise<{ user: UserData; page: Page }>;
+    },
+    opts: { extra?: number; name?: string } = {}
+) {
+    const name = opts.name ?? "Office Santa";
+    await enableSecretSanta(page);
+    const others = [];
+    for (let i = 0; i < (opts.extra ?? 3); i++) {
+        others.push(await userFactory.createUserPage({ group: userData.groups[0] }));
+    }
+    const create = await new CreateSecretSantaPage(page).goto();
+    await create.fillName(name);
+    await create.fillDescription("Budget 20 euro");
+    await create.selectParticipants(userData.name, ...others.map((o) => o.user.name));
+    await create.submit();
+    await new SecretSantaPage(page).expectCard(name);
+    return { name, others };
+}
+
+test.describe("overview", () => {
+    test("each participant sees exactly one recipient, never themselves", async ({ page, userData, userFactory }) => {
+        const { name, others } = await setup(page, userData, userFactory);
+        const all = [{ user: userData, page }, ...others];
+        const names = [];
+        for (const { user, page: p } of all) {
+            const overview = await new SecretSantaPage(p).goto();
+            const recipient = await overview.reveal(name);
+            expect(recipient).not.toBe(user.name);
+            names.push(recipient);
+        }
+        expect([...names].sort()).toEqual(all.map((a) => a.user.name).sort());
+    });
+
+    test("page data does not contain other participants' recipients", async ({ page, userData, userFactory }) => {
+        await setup(page, userData, userFactory);
+        const response = await page.request.get("/secret-santa/__data.json");
+        const body = await response.text();
+        expect(body).not.toContain("recipientId");
+        expect(body.split('"recipient"').length - 1).toBe(1);
+    });
+
+    test("view wishlists link points at the recipient", async ({ page, userData, userFactory }) => {
+        const { name, others } = await setup(page, userData, userFactory);
+        const overview = await new SecretSantaPage(page).goto();
+        const recipient = await overview.reveal(name);
+        const target = others.find((o) => o.user.name === recipient)!;
+        await expect(overview.card(name).getByRole("link", { name: /View .* wishlists/ })).toHaveAttribute(
+            "href",
+            `/lists?users=${target.user.id}`
+        );
+    });
+
+    test("plain member who is not a participant does not see it", async ({ page, userData, userFactory }) => {
+        await setup(page, userData, userFactory);
+        const member = await userFactory.createUserPage({ group: userData.groups[0], manager: false });
+        const overview = await new SecretSantaPage(member.page).goto();
+        await overview.expectEmpty();
+    });
+
+    test("group manager who is not a participant sees it without a recipient and can delete", async ({
+        page,
+        userData,
+        userFactory
+    }) => {
+        const { name } = await setup(page, userData, userFactory);
+        const manager = await userFactory.createUserPage({ group: userData.groups[0], manager: true });
+        const overview = await new SecretSantaPage(manager.page).goto();
+        await overview.expectCard(name);
+        await expect(manager.page.getByText("You are not participating in this Secret Santa")).toBeVisible();
+        await overview.deleteSecretSanta(name);
+        await overview.expectEmpty();
+    });
+
+    test("plain participant who is not the creator cannot delete", async ({ page, userData, userFactory, baseURL }) => {
+        await enableSecretSanta(page);
+        const plain = await userFactory.createUserPage({ group: userData.groups[0], manager: false });
+        const c = await userFactory.createUserPage({ group: userData.groups[0], manager: false });
+        const create = await new CreateSecretSantaPage(page).goto();
+        await create.fillName("Plain");
+        await create.selectParticipants(userData.name, plain.user.name, c.user.name);
+        await create.submit();
+        const creatorOverview = await new SecretSantaPage(page).at();
+        await creatorOverview.expectCard("Plain");
+
+        const overview = await new SecretSantaPage(plain.page).goto();
+        await overview.expectCard("Plain");
+        await expect(overview.card("Plain").getByRole("button", { name: "Delete Secret Santa" })).toHaveCount(0);
+
+        const secretSantaId = await creatorOverview.card("Plain").locator("input[name=id]").inputValue();
+        const response = await plain.page.request.post("/secret-santa?/delete", {
+            form: { id: secretSantaId },
+            headers: { Origin: baseURL!, Accept: "text/html" }
+        });
+        expect(response.status()).toBe(403);
+        await overview.goto();
+        await overview.expectCard("Plain");
+    });
+
+    test("secret santa from another group is not visible and cannot be deleted", async ({
+        page,
+        userData,
+        userFactory,
+        baseURL
+    }) => {
+        const { name } = await setup(page, userData, userFactory);
+        const overview = new SecretSantaPage(page);
+        const secretSantaId = await overview.card(name).locator("input[name=id]").inputValue();
+        const adminPage = await userFactory.getAdminPage();
+        const groupB: GroupData = await adminPage.request
+            .put("/api/groups", { data: { name: randomString(), createOnly: true } })
+            .then((r) => r.json())
+            .then(({ group }) => group);
+        await adminPage.request.put(`/api/groups/${groupB.id}/users/${userData.id}`, { data: { manager: true } });
+        await page.request.patch(`/api/users/${userData.id}/groups/${groupB.id}`, { data: { active: true } });
+        await page.goto("/");
+        await enableSecretSanta(page);
+
+        await overview.goto();
+        await overview.expectEmpty();
+        const response = await page.request.post("/secret-santa?/delete", {
+            form: { id: secretSantaId },
+            headers: { Origin: baseURL!, Accept: "text/html" }
+        });
+        expect(response.status()).toBe(404);
+
+        await page.request.patch(`/api/users/${userData.id}/groups/${userData.groups[0].id}`, {
+            data: { active: true }
+        });
+        await overview.goto();
+        await overview.expectCard(name);
+    });
+
+    test("deleted participant shows participant removed", async ({ page, userData, userFactory }) => {
+        const { name, others } = await setup(page, userData, userFactory, { extra: 2 });
+        const adminPage = await userFactory.getAdminPage();
+        const removed = others[0];
+        const response = await adminPage.request.delete(`/api/users/${removed.user.id}`);
+        expect(response.ok()).toBeTruthy();
+
+        const candidates = [{ page }, others[1]];
+        let found = false;
+        for (const c of candidates) {
+            const overview = await new SecretSantaPage(c.page).goto();
+            await overview.expectCard(name);
+            if (await c.page.getByText("Participant removed. Delete and recreate this Secret Santa.").isVisible()) {
+                found = true;
+            }
+        }
+        expect(found).toBe(true);
     });
 });

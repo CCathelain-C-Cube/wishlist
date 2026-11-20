@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getFormatter } from "$lib/i18n";
-    import type { ExclusionInput } from "$lib/server/secret-santa/input";
+    import type { ExclusionInput } from "$lib/secret-santa-types";
 
     interface Props {
         participants: { id: string; name: string }[];

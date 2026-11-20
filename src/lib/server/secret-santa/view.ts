@@ -1,3 +1,7 @@
+import type { SecretSantaView } from "../../secret-santa-types";
+
+export type { SecretSantaView };
+
 type UserRef = { id: string; name: string; username: string };
 
 export type SecretSantaRecord = {
@@ -13,18 +17,6 @@ export type SecretSantaRecord = {
         recipient: UserRef | null;
     }[];
     exclusions: { giverId: string; receiverId: string }[];
-};
-
-export type SecretSantaView = {
-    id: string;
-    name: string;
-    description: string | null;
-    isParticipant: boolean;
-    recipient: UserRef | null;
-    recipientRemoved: boolean;
-    participants: { id: string; name: string }[];
-    exclusions: { giverName: string; receiverName: string; twoWay: boolean }[];
-    canDelete: boolean;
 };
 
 export function toSecretSantaView(
