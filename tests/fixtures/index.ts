@@ -26,6 +26,7 @@ type MultiUserPageData = {
 
 type CreateUserPageOpts = {
     group?: GroupData;
+    manager?: boolean;
 };
 
 class UserFactory {
@@ -43,7 +44,9 @@ class UserFactory {
 
     public async createUserPage(opts?: CreateUserPageOpts): Promise<UserPageData> {
         return test.step("create user page", async () => {
-            const userData = await this.getAdminPage().then((adminPage) => createUser(adminPage.request, opts?.group));
+            const userData = await this.getAdminPage().then((adminPage) =>
+                createUser(adminPage.request, opts?.group, { manager: opts?.manager })
+            );
 
             const context = await this.browser.newContext();
             this.contexts.push(context);
