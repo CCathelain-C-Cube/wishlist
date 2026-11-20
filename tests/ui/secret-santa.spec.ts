@@ -29,11 +29,14 @@ test("enabling in group settings makes the page available", async ({ page }) => 
 });
 
 test("registry mode keeps it unavailable", async ({ page }) => {
-    const settingsPage = await new UserMenu(page).manageGroup().then((p) => p.clickSettingsTab());
-    const secretSanta = await settingsPage.getSecretSantaSettings();
-    await secretSanta.enable();
-    await settingsPage.saveSettings();
-    await settingsPage.changeWishlistMode("registry");
+    await enableSecretSanta(page);
+    const enabled = await page.goto("/secret-santa");
+    expect(enabled?.status()).toBe(200);
+
+    await new UserMenu(page)
+        .manageGroup()
+        .then((p) => p.clickSettingsTab())
+        .then((p) => p.changeWishlistMode("registry"));
 
     const response = await page.goto("/secret-santa");
     expect(response?.status()).toBe(404);
@@ -130,6 +133,24 @@ test.describe("create", () => {
     });
 });
 
+async function createGroupWithManager(adminPage: Page, userData: UserData): Promise<GroupData> {
+    const created = await adminPage.request.put("/api/groups", { data: { name: randomString(), createOnly: true } });
+    expect(created.ok()).toBeTruthy();
+    const { group }: { group: GroupData } = await created.json();
+    const added = await adminPage.request.put(`/api/groups/${group.id}/users/${userData.id}`, {
+        data: { manager: true }
+    });
+    expect(added.ok()).toBeTruthy();
+    return group;
+}
+
+async function setActiveGroup(page: Page, userData: UserData, group: GroupData) {
+    const response = await page.request.patch(`/api/users/${userData.id}/groups/${group.id}`, {
+        data: { active: true }
+    });
+    expect(response.ok()).toBeTruthy();
+}
+
 async function setup(
     page: Page,
     userData: UserData,
@@ -170,6 +191,7 @@ test.describe("overview", () => {
     test("page data does not contain other participants' recipients", async ({ page, userData, userFactory }) => {
         await setup(page, userData, userFactory);
         const response = await page.request.get("/secret-santa/__data.json");
+        expect(response.ok()).toBeTruthy();
         const body = await response.text();
         expect(body).not.toContain("recipientId");
         expect(body.split('"recipient"').length - 1).toBe(1);
@@ -242,12 +264,8 @@ test.describe("overview", () => {
         const overview = new SecretSantaPage(page);
         const secretSantaId = await overview.card(name).locator("input[name=id]").inputValue();
         const adminPage = await userFactory.getAdminPage();
-        const groupB: GroupData = await adminPage.request
-            .put("/api/groups", { data: { name: randomString(), createOnly: true } })
-            .then((r) => r.json())
-            .then(({ group }) => group);
-        await adminPage.request.put(`/api/groups/${groupB.id}/users/${userData.id}`, { data: { manager: true } });
-        await page.request.patch(`/api/users/${userData.id}/groups/${groupB.id}`, { data: { active: true } });
+        const groupB = await createGroupWithManager(adminPage, userData);
+        await setActiveGroup(page, userData, groupB);
         await page.goto("/");
         await enableSecretSanta(page);
 
@@ -259,9 +277,7 @@ test.describe("overview", () => {
         });
         expect(response.status()).toBe(404);
 
-        await page.request.patch(`/api/users/${userData.id}/groups/${userData.groups[0].id}`, {
-            data: { active: true }
-        });
+        await setActiveGroup(page, userData, userData.groups[0]);
         await overview.goto();
         await overview.expectCard(name);
     });
@@ -273,16 +289,18 @@ test.describe("overview", () => {
         const response = await adminPage.request.delete(`/api/users/${removed.user.id}`);
         expect(response.ok()).toBeTruthy();
 
+        // Exactly one remaining participant drew the removed user.
         const candidates = [{ page }, others[1]];
-        let found = false;
+        let removedCount = 0;
         for (const c of candidates) {
             const overview = await new SecretSantaPage(c.page).goto();
             await overview.expectCard(name);
-            if (await c.page.getByText("Participant removed. Delete and recreate this Secret Santa.").isVisible()) {
-                found = true;
-            }
+            removedCount += await overview
+                .card(name)
+                .getByText("Participant removed. Delete and recreate this Secret Santa.")
+                .count();
         }
-        expect(found).toBe(true);
+        expect(removedCount).toBe(1);
     });
 });
 
@@ -290,6 +308,13 @@ test.describe("navigation entry", () => {
     test("nav entry hidden when disabled", async ({ page }) => {
         await page.goto("/lists");
         await expect(page.getByRole("link", { name: "My Secret Santa" })).toHaveCount(0);
+    });
+
+    test("nav entry appears right after enabling, without a reload", async ({ page }) => {
+        await page.goto("/lists");
+        await expect(page.getByRole("link", { name: "My Secret Santa" })).toHaveCount(0);
+        await enableSecretSanta(page);
+        await expect(page.getByRole("link", { name: "My Secret Santa" })).toBeVisible();
     });
 
     test("nav entry visible when enabled and navigates to the overview", async ({ page }) => {
@@ -302,19 +327,13 @@ test.describe("navigation entry", () => {
     test("nav entry follows the active group", async ({ page, userData, userFactory }) => {
         await enableSecretSanta(page);
         const adminPage = await userFactory.getAdminPage();
-        const groupB: GroupData = await adminPage.request
-            .put("/api/groups", { data: { name: randomString(), createOnly: true } })
-            .then((r) => r.json())
-            .then(({ group }) => group);
-        await adminPage.request.put(`/api/groups/${groupB.id}/users/${userData.id}`, { data: { manager: true } });
+        const groupB = await createGroupWithManager(adminPage, userData);
 
-        await page.request.patch(`/api/users/${userData.id}/groups/${groupB.id}`, { data: { active: true } });
+        await setActiveGroup(page, userData, groupB);
         await page.goto("/lists");
         await expect(page.getByRole("link", { name: "My Secret Santa" })).toHaveCount(0);
 
-        await page.request.patch(`/api/users/${userData.id}/groups/${userData.groups[0].id}`, {
-            data: { active: true }
-        });
+        await setActiveGroup(page, userData, userData.groups[0]);
         await page.goto("/lists");
         await expect(page.getByRole("link", { name: "My Secret Santa" })).toBeVisible();
     });

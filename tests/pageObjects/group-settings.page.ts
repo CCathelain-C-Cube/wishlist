@@ -99,7 +99,12 @@ export class GroupSettingsPage extends BasePage {
     }
 
     async saveSettings() {
+        // Wait for this save's own POST: a toast from an earlier save may still be visible.
+        const response = this.page.waitForResponse(
+            (r) => r.request().method() === "POST" && new URL(r.url()).pathname.startsWith("/admin/groups/")
+        );
         await this.saveSettingsButton.click();
+        expect((await response).ok()).toBeTruthy();
         await new Toast(this.page).waitForToastWithText("Settings saved successfully");
         return this;
     }
