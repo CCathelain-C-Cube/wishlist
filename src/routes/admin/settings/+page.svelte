@@ -1,6 +1,6 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
-    import { goto } from "$app/navigation";
+    import { goto, invalidateAll } from "$app/navigation";
     import { page } from "$app/state";
     import { Email, General, Security, options } from "$lib/components/admin/Settings";
     import { onMount } from "svelte";
@@ -32,10 +32,12 @@
         } else {
             saving = true;
         }
-        return ({ action, result }) => {
+        return async ({ action, result }) => {
             if (action.search.endsWith("?/settings") && result.type === "success") {
                 saving = false;
                 toaster.info({ description: $t("admin.settings-saved-toast") });
+                // Refresh layout data so feature switches (e.g. the nav entry) apply immediately.
+                await invalidateAll();
             }
             if (action.search.endsWith("?/send-test") && result.type === "success") {
                 sending = false;

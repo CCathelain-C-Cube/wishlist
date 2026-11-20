@@ -1,5 +1,6 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
+    import { invalidateAll } from "$app/navigation";
     import { General } from "$lib/components/admin/Settings";
     import type { PageProps } from "./$types";
     import { getFormatter } from "$lib/i18n";
@@ -19,10 +20,12 @@
     use:enhance={() => {
         saving = true;
 
-        return ({ result }) => {
+        return async ({ result }) => {
             saving = false;
             if (result.type === "success") {
                 toaster.info({ description: $t("admin.settings-saved-toast") });
+                // Refresh layout data so feature switches (e.g. the nav entry) apply immediately.
+                await invalidateAll();
             }
         };
     }}
