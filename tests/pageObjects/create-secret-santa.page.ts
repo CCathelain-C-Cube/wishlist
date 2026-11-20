@@ -31,11 +31,17 @@ export class CreateSecretSantaPage extends BasePage {
     async addExclusion(giver: string, receiver: string, twoWay = true) {
         await this.page.getByRole("button", { name: "Add Exclusion" }).click();
         const row = this.page.getByTestId("exclusion-row").last();
-        await row.getByLabel("Giver").selectOption({ label: giver });
-        await row.getByLabel("Receiver").selectOption({ label: receiver });
+        await this.selectParticipant(row.getByLabel("Giver"), giver);
+        await this.selectParticipant(row.getByLabel("Receiver"), receiver);
         const both = row.getByRole("checkbox", { name: "Both ways" });
         if (twoWay) await both.check();
         else await both.uncheck();
+    }
+
+    // Options are labelled "name (username)"; pick by display name.
+    private async selectParticipant(select: Locator, name: string) {
+        const value = await select.locator("option", { hasText: `${name} (` }).getAttribute("value");
+        await select.selectOption(value!);
     }
 
     async submit() {

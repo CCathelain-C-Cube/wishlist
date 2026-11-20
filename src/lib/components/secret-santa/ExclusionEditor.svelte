@@ -3,7 +3,7 @@
     import type { ExclusionInput } from "$lib/secret-santa-types";
 
     interface Props {
-        participants: { id: string; name: string }[];
+        participants: { id: string; name: string; username: string }[];
         rows: ExclusionInput[];
     }
 
@@ -35,7 +35,7 @@
                 <span>{$t("secret-santa.giver")}</span>
                 <select class="select w-auto" bind:value={row.giverId}>
                     {#each participants as p (p.id)}
-                        <option value={p.id}>{p.name}</option>
+                        <option value={p.id}>{p.name} ({p.username})</option>
                     {/each}
                 </select>
             </label>
@@ -43,7 +43,7 @@
                 <span>{$t("secret-santa.receiver")}</span>
                 <select class="select w-auto" bind:value={row.receiverId}>
                     {#each participants as p (p.id)}
-                        <option value={p.id}>{p.name}</option>
+                        <option value={p.id}>{p.name} ({p.username})</option>
                     {/each}
                 </select>
             </label>
