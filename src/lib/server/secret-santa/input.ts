@@ -11,6 +11,8 @@ export type CreateInput = {
 };
 export type InputErrorCode =
     | "name-required"
+    | "name-too-long"
+    | "description-too-long"
     | "min-participants"
     | "too-many-participants"
     | "duplicate-participant"
@@ -19,6 +21,8 @@ export type InputErrorCode =
 
 const MIN_PARTICIPANTS = 3;
 export const MAX_PARTICIPANTS = 100;
+export const MAX_NAME_LENGTH = 200;
+export const MAX_DESCRIPTION_LENGTH = 10000;
 
 const schema = z.object({
     name: z.string(),
@@ -54,6 +58,9 @@ export function parseCreateInput(form: {
     const { participants, exclusions } = parsed.data;
     const name = parsed.data.name.trim();
     if (!name) return { ok: false, code: "name-required" };
+    if (name.length > MAX_NAME_LENGTH) return { ok: false, code: "name-too-long" };
+    const description = parsed.data.description?.trim() || null;
+    if (description && description.length > MAX_DESCRIPTION_LENGTH) return { ok: false, code: "description-too-long" };
     if (new Set(participants).size !== participants.length) return { ok: false, code: "duplicate-participant" };
     if (participants.length > MAX_PARTICIPANTS) return { ok: false, code: "too-many-participants" };
     if (participants.length < MIN_PARTICIPANTS) return { ok: false, code: "min-participants" };
@@ -67,7 +74,7 @@ export function parseCreateInput(form: {
         ok: true,
         data: {
             name,
-            description: parsed.data.description?.trim() || null,
+            description,
             participantIds: participants,
             exclusions
         }

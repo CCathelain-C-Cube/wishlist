@@ -37,6 +37,19 @@ describe("parseCreateInput", () => {
         assert.deepEqual(parseCreateInput(base({ name: "   " })), { ok: false, code: "name-required" });
     });
 
+    it("limits name to 200 characters", () => {
+        assert.equal(parseCreateInput(base({ name: "x".repeat(200) })).ok, true);
+        assert.deepEqual(parseCreateInput(base({ name: "x".repeat(201) })), { ok: false, code: "name-too-long" });
+    });
+
+    it("limits description to 10000 characters", () => {
+        assert.equal(parseCreateInput(base({ description: "x".repeat(10000) })).ok, true);
+        assert.deepEqual(parseCreateInput(base({ description: "x".repeat(10001) })), {
+            ok: false,
+            code: "description-too-long"
+        });
+    });
+
     it("rejects fewer than 3 participants", () => {
         assert.deepEqual(parseCreateInput(base({ participants: JSON.stringify(["a", "b"]) })), {
             ok: false,
