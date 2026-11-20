@@ -26,6 +26,11 @@ model User {
     lists               List[]
     preferredLanguage   String?
     managedLists        ListManager[]
+    createdSecretSantas SecretSanta[] @relation("CreatedSecretSantas")
+    secretSantaParticipations SecretSantaParticipant[] @relation("SecretSantaGiver")
+    secretSantaRecipients SecretSantaParticipant[] @relation("SecretSantaRecipient")
+    secretSantaExclusionsAsGiver SecretSantaExclusion[] @relation("SecretSantaExclusionGiver")
+    secretSantaExclusionsAsReceiver SecretSantaExclusion[] @relation("SecretSantaExclusionReceiver")
 
     @@map("user")
 }
@@ -63,8 +68,53 @@ model Group {
     name                String                @unique
     UserGroupMembership UserGroupMembership[]
     lists               List[]
+    secretSantas        SecretSanta[]
 
     @@map("group")
+}
+
+model SecretSanta {
+    id           String                   @id @unique @default(cuid())
+    name         String
+    description  String?
+    group        Group                    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    groupId      String
+    createdBy    User?                    @relation("CreatedSecretSantas", fields: [createdById], references: [id], onDelete: SetNull)
+    createdById  String?
+    createdAt    DateTime                 @default(now())
+    participants SecretSantaParticipant[]
+    exclusions   SecretSantaExclusion[]
+
+    @@index([groupId])
+    @@map("secret_santa")
+}
+
+model SecretSantaParticipant {
+    id            String      @id @unique @default(uuid())
+    secretSanta   SecretSanta @relation(fields: [secretSantaId], references: [id], onDelete: Cascade)
+    secretSantaId String
+    user          User        @relation("SecretSantaGiver", fields: [userId], references: [id], onDelete: Cascade)
+    userId        String
+    recipient     User?       @relation("SecretSantaRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
+    recipientId   String?
+
+    @@unique([secretSantaId, userId])
+    @@unique([secretSantaId, recipientId])
+    @@index([userId])
+    @@map("secret_santa_participant")
+}
+
+model SecretSantaExclusion {
+    id            String      @id @unique @default(uuid())
+    secretSanta   SecretSanta @relation(fields: [secretSantaId], references: [id], onDelete: Cascade)
+    secretSantaId String
+    giver         User        @relation("SecretSantaExclusionGiver", fields: [giverId], references: [id], onDelete: Cascade)
+    giverId       String
+    receiver      User        @relation("SecretSantaExclusionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+    receiverId    String
+
+    @@unique([secretSantaId, giverId, receiverId])
+    @@map("secret_santa_exclusion")
 }
 
 model UserGroupMembership {
