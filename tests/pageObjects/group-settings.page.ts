@@ -4,6 +4,7 @@ import { AddMemberModal } from "../modules/add-member-modal";
 import { ListSettings } from "../modules/list-settings";
 import { Toast } from "../modules/toast";
 import { SuggestionsSettings } from "../modules/suggestions-settings";
+import { SecretSantaSettings } from "../modules/secret-santa-settings";
 
 interface Props {
     name: string;
@@ -24,6 +25,7 @@ export class GroupSettingsPage extends BasePage {
     private readonly clearListsButton: Locator;
     private readonly clearClaimedItemsButton: Locator;
     private readonly suggestionsSettings: SuggestionsSettings;
+    private readonly secretSantaSettings: SecretSantaSettings;
     private readonly wishlistModeDropdown: Locator;
     private readonly saveSettingsButton: Locator;
 
@@ -41,6 +43,7 @@ export class GroupSettingsPage extends BasePage {
         this.clearListsButton = page.getByRole("button", { name: "Clear Lists" });
         this.clearClaimedItemsButton = page.getByRole("button", { name: "Clear Claimed Items" });
         this.suggestionsSettings = new SuggestionsSettings(page);
+        this.secretSantaSettings = new SecretSantaSettings(page);
         this.wishlistModeDropdown = page.getByLabel("Wishlist Mode").locator("select");
         this.saveSettingsButton = page.getByRole("button", { name: "Save", exact: true });
     }
@@ -83,6 +86,10 @@ export class GroupSettingsPage extends BasePage {
 
     async getSuggestionsSettings() {
         return this.suggestionsSettings;
+    }
+
+    async getSecretSantaSettings() {
+        return this.secretSantaSettings;
     }
 
     async changeWishlistMode(mode: WishlistMode) {

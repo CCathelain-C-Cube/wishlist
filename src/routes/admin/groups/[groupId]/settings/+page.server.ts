@@ -47,6 +47,7 @@ export const actions: Actions = {
         const groupSettingSchema = settingSchema.pick({
             suggestionMethod: true,
             enableSuggestions: true,
+            enableSecretSanta: true,
             claimsShowName: true,
             claimsShowNameAcrossGroups: true,
             claimsShowForOwner: true,
@@ -66,12 +67,13 @@ export const actions: Actions = {
         const existingConfig = await getConfig(params.groupId);
         const newConfig: Pick<
             Config,
-            "suggestions" | "claims" | "listMode" | "enableDefaultListCreation" | "allowPublicLists"
+            "suggestions" | "secretSanta" | "claims" | "listMode" | "enableDefaultListCreation" | "allowPublicLists"
         > = {
             suggestions: {
                 enable: configData.data.enableSuggestions,
                 method: configData.data.suggestionMethod
             },
+            secretSanta: { enable: configData.data.enableSecretSanta },
             claims: {
                 showName: configData.data.claimsShowName,
                 showNameAcrossGroups: configData.data.claimsShowNameAcrossGroups,

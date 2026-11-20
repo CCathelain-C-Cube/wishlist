@@ -100,6 +100,7 @@ type Config = {
         enable: boolean;
         method: SuggestionMethod;
     };
+    secretSanta: { enable: boolean };
     smtp: SMTPConfig;
     claims: {
         showName: boolean;

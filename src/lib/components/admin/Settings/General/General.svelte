@@ -2,6 +2,7 @@
     import type { Group } from "$lib/generated/prisma/client";
     import WishlistMode from "./WishlistMode.svelte";
     import Suggestions from "./Suggestions.svelte";
+    import SecretSanta from "./SecretSanta.svelte";
     import Claims from "./Claims.svelte";
     import Lists from "./Lists.svelte";
     import Groups from "./Groups.svelte";
@@ -10,7 +11,13 @@
     interface Props {
         config: Pick<
             Config,
-            "claims" | "defaultGroup" | "suggestions" | "enableDefaultListCreation" | "listMode" | "allowPublicLists"
+            | "claims"
+            | "defaultGroup"
+            | "suggestions"
+            | "secretSanta"
+            | "enableDefaultListCreation"
+            | "listMode"
+            | "allowPublicLists"
         >;
         groups: Group[];
         hidden?: boolean;
@@ -31,6 +38,8 @@
     {/if}
 
     <Suggestions {config} />
+
+    <SecretSanta {config} {forGroup} />
 
     <Claims {config} />
 

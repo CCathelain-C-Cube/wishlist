@@ -118,6 +118,7 @@ const generateConfig = (configData: z.infer<typeof settingSchema>) => {
             enable: configData.enableSuggestions,
             method: configData.suggestionMethod
         },
+        secretSanta: { enable: configData.enableSecretSanta },
         smtp: smtpConfig,
         claims: {
             showName: configData.claimsShowName,
