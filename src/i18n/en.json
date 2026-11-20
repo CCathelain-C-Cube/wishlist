@@ -267,6 +267,7 @@
         "secret-santa-min-participants": "A Secret Santa needs at least 3 participants",
         "secret-santa-name-required": "Name must not be blank",
         "secret-santa-no-valid-draw": "No valid draw is possible with these exclusions",
+        "secret-santa-too-many-participants": "A Secret Santa can have at most 100 participants",
         "self-claims-not-available": "Cannot allow self claims when claims are not visible to owners on their own list",
         "something-went-wrong": "Something went wrong",
         "suggestions-are-disabled": "Suggestions are disabled",

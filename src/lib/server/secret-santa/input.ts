@@ -10,9 +10,15 @@ export type CreateInput = {
     exclusions: ExclusionInput[];
 };
 export type InputErrorCode =
-    "name-required" | "min-participants" | "duplicate-participant" | "invalid-exclusion" | "malformed";
+    | "name-required"
+    | "min-participants"
+    | "too-many-participants"
+    | "duplicate-participant"
+    | "invalid-exclusion"
+    | "malformed";
 
 const MIN_PARTICIPANTS = 3;
+export const MAX_PARTICIPANTS = 100;
 
 const schema = z.object({
     name: z.string(),
@@ -49,6 +55,7 @@ export function parseCreateInput(form: {
     const name = parsed.data.name.trim();
     if (!name) return { ok: false, code: "name-required" };
     if (new Set(participants).size !== participants.length) return { ok: false, code: "duplicate-participant" };
+    if (participants.length > MAX_PARTICIPANTS) return { ok: false, code: "too-many-participants" };
     if (participants.length < MIN_PARTICIPANTS) return { ok: false, code: "min-participants" };
 
     const ids = new Set(participants);

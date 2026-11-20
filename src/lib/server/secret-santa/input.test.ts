@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { expandExclusions, parseCreateInput } from "./input";
+import { expandExclusions, MAX_PARTICIPANTS, parseCreateInput } from "./input";
 
 const base = (over: Record<string, unknown> = {}) => ({
     name: "  Xmas  ",
@@ -41,6 +41,24 @@ describe("parseCreateInput", () => {
         assert.deepEqual(parseCreateInput(base({ participants: JSON.stringify(["a", "b"]) })), {
             ok: false,
             code: "min-participants"
+        });
+    });
+
+    it("caps participants at 100", () => {
+        assert.equal(MAX_PARTICIPANTS, 100);
+        const ids = (n: number) => JSON.stringify(Array.from({ length: n }, (_, i) => `p${i}`));
+        assert.deepEqual(parseCreateInput(base({ participants: ids(101) })), {
+            ok: false,
+            code: "too-many-participants"
+        });
+        assert.equal(parseCreateInput(base({ participants: ids(100) })).ok, true);
+    });
+
+    it("reports duplicates before the participant cap", () => {
+        const dupes = JSON.stringify([...Array.from({ length: 101 }, (_, i) => `p${i}`), "p0"]);
+        assert.deepEqual(parseCreateInput(base({ participants: dupes })), {
+            ok: false,
+            code: "duplicate-participant"
         });
     });
 
