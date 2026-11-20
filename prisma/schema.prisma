@@ -8,29 +8,29 @@ generator client {
 }
 
 model User {
-    id                  String                @id @unique @default(cuid(2))
-    sessions            Session[]
-    username            String                @unique
-    name                String
-    email               String                @unique @default("changeme@email.com")
-    picture             String?
-    items               Item[]                @relation("MyItems")
-    createdItems        Item[]                @relation("CreatedItems")
-    addedItems          ListItem[]
-    claimedItems        ItemClaim[]
-    role                Role                  @relation(fields: [roleId], references: [id])
-    roleId              Int                   @default(1)
-    UserGroupMembership UserGroupMembership[]
-    hashedPassword      String
-    oauthId             String?
-    lists               List[]
-    preferredLanguage   String?
-    managedLists        ListManager[]
-    createdSecretSantas SecretSanta[] @relation("CreatedSecretSantas")
-    secretSantaParticipations SecretSantaParticipant[] @relation("SecretSantaGiver")
-    secretSantaRecipients SecretSantaParticipant[] @relation("SecretSantaRecipient")
-    secretSantaExclusionsAsGiver SecretSantaExclusion[] @relation("SecretSantaExclusionGiver")
-    secretSantaExclusionsAsReceiver SecretSantaExclusion[] @relation("SecretSantaExclusionReceiver")
+    id                              String                   @id @unique @default(cuid(2))
+    sessions                        Session[]
+    username                        String                   @unique
+    name                            String
+    email                           String                   @unique @default("changeme@email.com")
+    picture                         String?
+    items                           Item[]                   @relation("MyItems")
+    createdItems                    Item[]                   @relation("CreatedItems")
+    addedItems                      ListItem[]
+    claimedItems                    ItemClaim[]
+    role                            Role                     @relation(fields: [roleId], references: [id])
+    roleId                          Int                      @default(1)
+    UserGroupMembership             UserGroupMembership[]
+    hashedPassword                  String
+    oauthId                         String?
+    lists                           List[]
+    preferredLanguage               String?
+    managedLists                    ListManager[]
+    createdSecretSantas             SecretSanta[]            @relation("CreatedSecretSantas")
+    secretSantaParticipations       SecretSantaParticipant[] @relation("SecretSantaGiver")
+    secretSantaRecipients           SecretSantaParticipant[] @relation("SecretSantaRecipient")
+    secretSantaExclusionsAsGiver    SecretSantaExclusion[]   @relation("SecretSantaExclusionGiver")
+    secretSantaExclusionsAsReceiver SecretSantaExclusion[]   @relation("SecretSantaExclusionReceiver")
 
     @@map("user")
 }
