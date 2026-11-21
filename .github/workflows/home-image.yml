@@ -72,6 +72,17 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Upstream version
+              id: version
+              shell: bash
+              run: |
+                  version="$(.github/scripts/image-version.sh)"
+                  echo "version=${version}" >> "$GITHUB_OUTPUT"
+                  echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+                  echo "Building wishlist-santa ${version}-${GITHUB_SHA::7}"
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
@@ -83,12 +94,6 @@ jobs:
                   username: ${{ github.repository_owner }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Short SHA
-              id: vars
-              shell: bash
-              run: |
-                  echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-
             - name: Docker Tags
               id: tags
               uses: docker/metadata-action@v6
@@ -98,6 +103,15 @@ jobs:
                       type=raw,value=home
                       type=sha
 
+            - name: Docker Tags (wishlist-santa)
+              id: santa
+              uses: docker/metadata-action@v6
+              with:
+                  images: ghcr.io/${{ github.repository_owner }}/wishlist-santa
+                  tags: |
+                      type=raw,value=${{ steps.version.outputs.version }}
+                      type=raw,value=${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}
+
             - name: Build and Push
               uses: docker/build-push-action@v7
               with:
@@ -105,10 +119,12 @@ jobs:
                   file: ./Dockerfile
                   platforms: linux/amd64
                   push: true
-                  tags: ${{ steps.tags.outputs.tags }}
+                  tags: |
+                      ${{ steps.tags.outputs.tags }}
+                      ${{ steps.santa.outputs.tags }}
                   labels: ${{ steps.tags.outputs.labels }}
                   build-args: |
                       SHA=${{ github.sha }}
-                      VERSION=home-${{ steps.vars.outputs.short_sha }}
+                      VERSION=${{ steps.version.outputs.version }}-${{ steps.version.outputs.short_sha }}
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
