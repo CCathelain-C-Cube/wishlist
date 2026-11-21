@@ -18,6 +18,10 @@
 
     const { data, children }: LayoutProps = $props();
 
+    const visibleNavItems = $derived(
+        navItems.filter((i) => !("feature" in i) || (i.feature === "secretSanta" && data.secretSantaEnabled))
+    );
+
     let showNavigationLoadingBar = $state(false);
     let documentTitle: string | undefined = $state();
     let disabled = $state(false);
@@ -110,7 +114,7 @@
         {#if showNavigationLoadingBar}
             <NavigationLoadingBar />
         {/if}
-        <NavBar groups={data.groups} isProxyUser={data.isProxyUser} {navItems} user={data.user} />
+        <NavBar groups={data.groups} isProxyUser={data.isProxyUser} navItems={visibleNavItems} user={data.user} />
     </header>
 
     <main id="main" class="h-full min-h-screen px-4 py-4 md:px-12 lg:px-32 xl:px-56">
@@ -121,7 +125,7 @@
     </main>
 
     <footer class="sticky bottom-0 z-10 print:hidden" bind:clientHeight={footerHeight}>
-        <BottomTabs {navItems} user={data.user} />
+        <BottomTabs navItems={visibleNavItems} user={data.user} />
     </footer>
 </div>
 

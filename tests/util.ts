@@ -48,7 +48,11 @@ export const addUserToGroup = async (pageWithGroupManagerContext: Page, userName
     await pageWithGroupManagerContext.goto(previousUrl);
 };
 
-export const createUser = async (request: APIRequestContext, existingGroup?: GroupData): Promise<UserData> => {
+export const createUser = async (
+    request: APIRequestContext,
+    existingGroup?: GroupData,
+    opts?: { manager?: boolean }
+): Promise<UserData> => {
     const name = randomString();
     const username = randomString();
     const email = username + "@example.com";
@@ -69,7 +73,7 @@ export const createUser = async (request: APIRequestContext, existingGroup?: Gro
             .then(({ group }) => group);
     }
 
-    await request.put(`/api/groups/${group.id}/users/${userId}`, { data: { manager: true } });
+    await request.put(`/api/groups/${group.id}/users/${userId}`, { data: { manager: opts?.manager ?? true } });
     await request.patch(`/api/users/${userId}/groups/${group.id}`, { data: { active: true } });
 
     return {

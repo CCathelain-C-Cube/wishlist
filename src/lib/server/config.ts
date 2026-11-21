@@ -7,6 +7,7 @@ enum ConfigKey {
     SIGNUP_ENABLE = "enableSignup",
     SUGGESTIONS_ENABLE = "suggestions.enable",
     SUGGESTIONS_METHOD = "suggestions.method",
+    SECRET_SANTA_ENABLE = "secretSanta.enable",
     SMTP_ENABLE = "smtp.enable",
     SMTP_HOST = "smtp.host",
     SMTP_PORT = "smtp.port",
@@ -80,6 +81,7 @@ const transformers: Record<ConfigKey, Transformer<unknown>> = {
     enableSignup: booleanTransformer,
     "suggestions.enable": booleanTransformer,
     "suggestions.method": stringTransformer,
+    "secretSanta.enable": booleanTransformer,
     "smtp.enable": booleanTransformer,
     "smtp.host": stringTransformer,
     "smtp.port": numberTransformer,
@@ -120,6 +122,9 @@ const getDefaultConfig = (): Config => ({
     suggestions: {
         enable: true,
         method: "approval"
+    },
+    secretSanta: {
+        enable: false
     },
     smtp: {
         enable: false,

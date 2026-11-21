@@ -4,6 +4,7 @@ import { AddMemberModal } from "../modules/add-member-modal";
 import { ListSettings } from "../modules/list-settings";
 import { Toast } from "../modules/toast";
 import { SuggestionsSettings } from "../modules/suggestions-settings";
+import { SecretSantaSettings } from "../modules/secret-santa-settings";
 
 interface Props {
     name: string;
@@ -24,6 +25,7 @@ export class GroupSettingsPage extends BasePage {
     private readonly clearListsButton: Locator;
     private readonly clearClaimedItemsButton: Locator;
     private readonly suggestionsSettings: SuggestionsSettings;
+    private readonly secretSantaSettings: SecretSantaSettings;
     private readonly wishlistModeDropdown: Locator;
     private readonly saveSettingsButton: Locator;
 
@@ -41,6 +43,7 @@ export class GroupSettingsPage extends BasePage {
         this.clearListsButton = page.getByRole("button", { name: "Clear Lists" });
         this.clearClaimedItemsButton = page.getByRole("button", { name: "Clear Claimed Items" });
         this.suggestionsSettings = new SuggestionsSettings(page);
+        this.secretSantaSettings = new SecretSantaSettings(page);
         this.wishlistModeDropdown = page.getByLabel("Wishlist Mode").locator("select");
         this.saveSettingsButton = page.getByRole("button", { name: "Save", exact: true });
     }
@@ -85,6 +88,10 @@ export class GroupSettingsPage extends BasePage {
         return this.suggestionsSettings;
     }
 
+    async getSecretSantaSettings() {
+        return this.secretSantaSettings;
+    }
+
     async changeWishlistMode(mode: WishlistMode) {
         await this.wishlistModeDropdown.selectOption(mode);
         await this.saveSettings();
@@ -92,7 +99,12 @@ export class GroupSettingsPage extends BasePage {
     }
 
     async saveSettings() {
+        // Wait for this save's own POST: a toast from an earlier save may still be visible.
+        const response = this.page.waitForResponse(
+            (r) => r.request().method() === "POST" && new URL(r.url()).pathname.startsWith("/admin/groups/")
+        );
         await this.saveSettingsButton.click();
+        expect((await response).ok()).toBeTruthy();
         await new Toast(this.page).waitForToastWithText("Settings saved successfully");
         return this;
     }

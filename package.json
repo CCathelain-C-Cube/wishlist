@@ -14,7 +14,8 @@
         "db:patch": "tsx prisma/patches/index.ts",
         "test": "playwright test",
         "test:build": "docker compose -f tests/docker/docker-compose.yaml build",
-        "test:setup": "playwright install --with-deps chromium"
+        "test:setup": "playwright install --with-deps chromium",
+        "test:unit": "tsx --test \"src/lib/server/**/*.test.ts\""
     },
     "devDependencies": {
         "@eslint/js": "^10.0.0",

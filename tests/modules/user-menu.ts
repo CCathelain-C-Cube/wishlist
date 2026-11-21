@@ -33,8 +33,11 @@ export class UserMenu {
     }
 
     async open() {
-        await this.avatarButton.click();
-        await expect(this.navList).toBeVisible();
+        // A click that lands before hydration (or while the page re-renders) is lost, so retry it.
+        await expect(async () => {
+            if (!(await this.navList.isVisible())) await this.avatarButton.click();
+            await expect(this.navList).toBeVisible({ timeout: 1000 });
+        }).toPass({ timeout: 10_000 });
     }
 
     async close() {
@@ -50,9 +53,11 @@ export class UserMenu {
     }
 
     async manageGroup() {
-        await this.open();
-        await this.manageGroupButton.click();
-        await this.page.waitForURL(/admin\/groups\/.*/);
+        await expect(async () => {
+            await this.open();
+            await this.manageGroupButton.click({ timeout: 2000 });
+            await this.page.waitForURL(/admin\/groups\/.*/, { timeout: 5000 });
+        }).toPass({ timeout: 20_000 });
         return new GroupSettingsPage(this.page);
     }
 
