@@ -27,4 +27,11 @@ if [ "$(git rev-parse HEAD)" = "$before" ]; then
     echo "home already up to date"
     exit 0
 fi
+
+# Upstream workflows arrive enabled on the fork; flag new or renamed ones so they can be
+# disabled (gh workflow disable) before they run against the fork.
+new_workflows="$(git diff --name-only --diff-filter=AR "$before" HEAD -- .github/workflows | tr '\n' ' ')"
+if [ -n "$new_workflows" ]; then
+    echo "::warning::Upstream added or renamed workflows: ${new_workflows}- review and disable on the fork if needed."
+fi
 git push "$REMOTE" HEAD:refs/heads/home

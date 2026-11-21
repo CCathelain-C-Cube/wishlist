@@ -47,7 +47,7 @@ Upstream sync:
         - Use `docker/metadata-action` with the image `ghcr.io/${{ github.repository }}` and tags `type=raw,value=home` and `type=sha` (`sha-<short>`).
         - Then `docker/build-push-action`, platform `linux/amd64` only. Build args `SHA=${{ github.sha }}` and `VERSION=home-<short sha>`. GHA cache.
         - No QEMU step is needed for amd64 only.
-    - **Action versions:** use the same versions as upstream's `build_push.yml` (checkout@v7, setup-buildx@v4, login@v4, metadata@v6, build-push@v7), so Renovate updates them together.
+    - **Action versions:** use the same versions as upstream's `build_push.yml` (checkout@v7, setup-buildx@v4, login@v4, metadata@v6, build-push@v7). Upstream's Renovate only edits upstream's files, so these pins drift: bump them by hand when upstream bumps `build_push.yml` (the sync's merge commits show it).
 - **Sync workflow.** `.github/workflows/home-sync.yml` on `home`, triggered by `schedule` (weekly, Monday 04:00 UTC) and `workflow_dispatch`. One job:
     1. Check out `home` with full history, using the token below.
     2. Fast-forward the fork's `main` to upstream: fetch `https://github.com/cmintey/wishlist.git` `main`, then `git push origin FETCH_HEAD:main`. A normal push is fast-forward only, so a diverged fork `main` fails the run instead of being overwritten.
@@ -61,6 +61,10 @@ Upstream sync:
 - **Keeping syncs quiet.** Fork-only changes live only in new files (the two workflows and the docs). `home` never edits upstream files except through merged feature branches.
 - **Once upstream merges a feature,** the same change arrives through `main`. Git usually reconciles identical content; if upstream modified it, expect a one-time conflict.
 - **Inactivity.** GitHub disables scheduled workflows in public repos after 60 days without repository activity. If that happens, re-enable it in the Actions tab; `task sync` still works meanwhile.
+- **Enable Actions on the fork (owner action, first).** GitHub keeps workflows off on a fork until they're enabled in the Actions tab. Enabling them also enables upstream's workflows, so disable "Build and Push Docker Image" in the same sitting.
+- **Migration check.** The `check` job runs `.github/scripts/check-migrations.sh`: apply all migrations to an empty SQLite database, then `prisma migrate diff --exit-code` against `schema.prisma`. Upstream's `entrypoint.sh` starts the server even if `migrate deploy` fails, so a duplicate or missing migration (for example, upstream adopting Secret Santa under a different migration name) must fail CI instead.
+- **New upstream workflows.** `gh workflow disable` works per file. The sync emits a `::warning::` naming any workflow upstream adds or renames, so it can be reviewed and disabled.
+- **Pushing to the fork's `main`.** The sync, and `task sync`, are the one sanctioned exception to "never push to main". They only fast-forward it to upstream. Agents must not run `task sync` unprompted.
 - **On the fork.** Disable upstream's "Build and Push Docker Image" workflow (`gh workflow disable`) so syncing `main` doesn't trigger a failing Docker Hub push.
 - **Package visibility.** The owner sets it in GHCR after the first build. Public means no pull secret; private means the cluster needs an `imagePullSecret`.
 - **Fork-only docs.** Fork-only docs, including this one, live on `home` only.

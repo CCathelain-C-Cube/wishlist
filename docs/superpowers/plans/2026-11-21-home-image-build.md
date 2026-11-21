@@ -115,6 +115,7 @@
 
 ### Task 5: Publish (outward-facing; the owner confirms first)
 
+- [ ] **Step 0 (owner):** Enable Actions on the fork (Actions tab → "I understand my workflows, go ahead and enable them"). Do Step 2 right after.
 - [ ] **Step 1:** The owner runs `! gh auth login` (interactive) if `devbox run -- 'gh auth status'` shows no login.
 - [ ] **Step 2:** Disable upstream's push workflow on the fork: `devbox run -- 'gh workflow disable "Build and Push Docker Image" -R the-vas/wishlist'`. Expected: `gh workflow list -R the-vas/wishlist` shows it as `disabled_manually`. If Actions are disabled on the fork entirely, the owner enables them in the repo settings first.
 - [ ] **Step 3:** `git push -u origin home`.

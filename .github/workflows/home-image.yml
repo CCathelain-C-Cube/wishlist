@@ -51,6 +51,9 @@ jobs:
             - name: Prisma Client Generate
               run: pnpm prisma generate
 
+            - name: Migrations apply and match schema
+              run: .github/scripts/check-migrations.sh
+
             - name: Svelte Check
               run: pnpm run check
 
