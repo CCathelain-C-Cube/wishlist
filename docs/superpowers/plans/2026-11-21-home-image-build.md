@@ -80,7 +80,7 @@
 - Create: `.github/workflows/home-sync.yml` (on `home`)
 
 - [ ] **Step 1: Write the workflow** to match these assertions:
-    - `on.schedule` with cron `17 4 * * 1`, plus `workflow_dispatch`. `concurrency.group: home-sync`, `cancel-in-progress: false`.
+    - Workflow `name: Home Sync`. `on.schedule` with cron `17 4 * * 1`, plus `workflow_dispatch`. `concurrency.group: home-sync`, `cancel-in-progress: false`.
     - `permissions: { contents: read }` at the top. Every write goes through `HOME_SYNC_TOKEN`.
     - One job, `sync`, on `ubuntu-latest`:
         - `actions/checkout@v7` with `ref: home`, `fetch-depth: 0` and `token: ${{ secrets.HOME_SYNC_TOKEN }}`.
