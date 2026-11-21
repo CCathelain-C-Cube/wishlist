@@ -1,0 +1,41 @@
+# Fork-only: keep main in sync with upstream and merge it into home.
+# A push to home (made with HOME_SYNC_TOKEN, so it triggers workflows) runs Home Image.
+# Must live on the default branch (home) for the schedule to fire.
+name: Home Sync
+permissions:
+    contents: read
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: "17 4 * * 1"
+concurrency:
+    group: home-sync
+    cancel-in-progress: false
+
+jobs:
+    sync:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Require sync token
+              env:
+                  HOME_SYNC_TOKEN: ${{ secrets.HOME_SYNC_TOKEN }}
+              run: |
+                  if [ -z "$HOME_SYNC_TOKEN" ]; then
+                      echo "::error::Secret HOME_SYNC_TOKEN is not set (fine-grained PAT: Contents + Workflows read/write)."
+                      exit 1
+                  fi
+
+            - name: Checkout home
+              uses: actions/checkout@v7
+              with:
+                  ref: home
+                  fetch-depth: 0
+                  token: ${{ secrets.HOME_SYNC_TOKEN }}
+
+            - name: Git identity
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            - name: Sync main and merge into home
+              run: .github/scripts/home-sync.sh
