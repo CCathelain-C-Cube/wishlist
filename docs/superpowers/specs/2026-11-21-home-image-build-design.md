@@ -75,3 +75,12 @@ Upstream sync:
 
 - The exact `VERSION` build-arg expression.
 - Job and step names.
+
+## Revision 2026-11-21: follow upstream releases, `wishlist-santa` image (approved)
+
+- **Why.** The owner wants images tagged with the upstream version (`wishlist-santa:<version>`), and wants to run upstream's released code, not `main`.
+- **Approaches considered.** (A) Keep following `main` and tag `<release>-<commits since>`. (B) Follow releases. Chosen: B, option 1, with no history rewrite. `home` already contains 20 unreleased upstream commits through `feat/secret-santa`, which is based on upstream `main`. So `0.69.0` is slightly inexact until upstream's next release (that release contains those commits) and exact afterwards, as long as feature branches don't run ahead of the release. Rejected: rebuilding `home` as `v0.69.0` plus cherry-picked features (a force-push, and every feature update would need cherry-picking).
+- **Sync.** The fork's `main` keeps fast-forwarding to upstream `main`. `home` no longer merges `main`. It merges upstream's latest release tag, the highest `vX.Y.Z` by version sort with suffixed tags such as `-rc1` ignored, and only if `home` doesn't already contain it. Merge message: `chore: merge upstream vX.Y.Z into home`. If there's no new release, `home` is untouched. The same applies to `task sync`.
+- **Version.** `.github/scripts/image-version.sh` fetches upstream tags and prints the newest `vX.Y.Z` contained in `HEAD`, without the `v`. It exits non-zero if there is none.
+- **Image.** `ghcr.io/<repo>` keeps `:home` and `:sha-<short>`. The new `ghcr.io/<owner>/wishlist-santa` gets `:<version>` (moving) and `:<version>-<sha7>` (immutable). The build arg becomes `VERSION=<version>-<sha7>`.
+- **Tests.** `image-version.test.sh` is new. `home-sync.test.sh` and `taskfile.test.sh` gain release-following cases.
