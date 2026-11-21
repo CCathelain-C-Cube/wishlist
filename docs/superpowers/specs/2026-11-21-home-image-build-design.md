@@ -84,3 +84,4 @@ Upstream sync:
 - **Version.** `.github/scripts/image-version.sh` fetches upstream tags and prints the newest `vX.Y.Z` contained in `HEAD`, without the `v`. It exits non-zero if there is none.
 - **Image.** `ghcr.io/<repo>` keeps `:home` and `:sha-<short>`. The new `ghcr.io/<owner>/wishlist-santa` gets `:<version>` (moving) and `:<version>-<sha7>` (immutable). The build arg becomes `VERSION=<version>-<sha7>`.
 - **Tests.** `image-version.test.sh` is new. `home-sync.test.sh` and `taskfile.test.sh` gain release-following cases.
+- **Using the tags.** `wishlist-santa:<version>` moves on every `home` build, including feature merges within one release. Deploy `:<version>-<sha7>` (or a digest) for repeatable rollouts, or use `:<version>` with `imagePullPolicy: Always`. Neither tag sorts in build order for image automation (Flux/Argo): add a `<version>-home.<run_number>` tag if that is introduced.
