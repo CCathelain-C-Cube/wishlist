@@ -1,6 +1,6 @@
 services:
     app:
-        container_name: wishlist-app
+        container_name: santa-app
         build: .
         ports:
             - 3281:3281
